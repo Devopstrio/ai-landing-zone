@@ -1,0 +1,34 @@
+name: AI-LZ Enterprise Release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run TfSec (IaC Scan)
+        uses: aquasecurity/tfsec-action@v1.0.0
+      - name: Scan Docker Images
+        run: |
+          docker build -t ai-lz-api:latest -f Dockerfile.api .
+          # In prod: trivy image ai-lz-api:latest
+
+  deploy-core:
+    needs: security-audit
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+      - name: Terraform Init & Apply
+        run: |
+          terraform -chdir=terraform/environments/prod init
+          terraform -chdir=terraform/environments/prod apply -auto-approve
+      
+      - name: Helm Deploy Platform
+        run: |
+          az aks get-credentials --resource-group rg-ailz-hub --name aks-ai-workloads-prod
+          helm upgrade --install ai-lz-platform ./helm/ai-landing-zone --namespace ai-platform --create-namespace

@@ -1,0 +1,42 @@
+# AI-LZ: Global Platform Values
+# Standardized across Dev, Test, and Prod
+
+replicaCount: 3
+
+image:
+  repository: acrdevopstrio.azurecr.io/ai-lz-api
+  pullPolicy: Always
+  tag: "3.5.0"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: azure-application-gateway
+  annotations:
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
+    appgw.ingress.kubernetes.io/rule-type: "path_based"
+  hosts:
+    - host: portal.ailz.devopstrio.co.uk
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector:
+  agentpool: systempool
