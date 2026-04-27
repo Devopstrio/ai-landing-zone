@@ -2,147 +2,136 @@
 
 <img src="https://raw.githubusercontent.com/Devopstrio/.github/main/assets/Browser_logo.png" height="85" alt="Devopstrio Logo" />
 
-<h1>Enterprise AI Landing Zone (AI-LZ)</h1>
+<h1>AI Landing Zone (AI-LZ)</h1>
 
-<p><strong>The Industrial Foundation for Generative AI, MLOps, and Intelligent Automation at Scale</strong></p>
+<p><strong>The Industrial Foundation for Generative AI, MLOps, and Intelligent Automation</strong></p>
 
 [![Architecture](https://img.shields.io/badge/Architecture-Hub%E2%80%94Spoke-522c72?style=for-the-badge&labelColor=000000)](https://devopstrio.co.uk/)
-[![Cloud](https://img.shields.io/badge/Platform-Azure_Enterprise-0078d4?style=for-the-badge&logo=microsoftazure&labelColor=000000)](/terraform)
-[![Security](https://img.shields.io/badge/Security-Zero_Trust-962964?style=for-the-badge&labelColor=000000)](/terraform)
-[![AI](https://img.shields.io/badge/AI-Generation_Next-success?style=for-the-badge&labelColor=000000)](https://devopstrio.co.uk/)
+[![Cloud](https://img.shields.io/badge/Cloud-Azure_ALZ-0078d4?style=for-the-badge&logo=microsoftazure&labelColor=000000)](/terraform)
+[![Security](https://img.shields.io/badge/Compliance-SOC2_%7C_HIPAA-962964?style=for-the-badge&labelColor=000000)](/terraform)
+[![AI](https://img.shields.io/badge/Status-Industrial_Grade-success?style=for-the-badge&labelColor=000000)](https://devopstrio.co.uk/)
 
 <br/>
 
-> **"Scale your AI vision on a foundation of iron."** The AI Landing Zone (AI-LZ) is a production-hardened platform engineered to provide secure, governed, and self-service environments for enterprise AI workloads.
+> **"Scale your AI vision on a foundation of iron."** The AI Landing Zone (AI-LZ) is a production-hardened platform designed to provide secure, governed, and self-service environments for enterprise AI workloads.
 
 </div>
 
 ---
 
-## 🏛️ Executive Summary
+## 🏛️ High-Level Architecture (Reference)
 
-The **Enterprise AI Landing Zone (AI-LZ)** is a comprehensive deployment framework that automates the creation of high-security environments for AI, GenAI, and ML workloads. Built on **Azure Landing Zone (ALZ)** principles, it ensures that every AI project—from RAG platforms to model training—resides within a compliant, network-isolated, and governed ecosystem.
-
-### Strategic Objectives
-- **Accelerate Onboarding**: Transition from "Proposal" to "Provisioned AI Stack" in minutes.
-- **Enforce Governance**: Automated Policy-as-Code to prevent public data exposure.
-- **Enable FinOps**: Unit-cost visibility for GPU consumption and Token usage.
-- **Scale Securely**: Standardized hub-spoke networking with regional failover.
+![AI Landing Zone Architecture](assets/architecture.png)
 
 ---
 
-## 🏗️ Technical Architecture
+## 📐 Enterprise Architecture Pillars
 
-### 1. High-Level Blueprint
+### 1. Management Group & Subscription Hierarchy
+The AI-LZ follows the **Azure Landing Zone (ALZ)** conceptual architecture, utilizing a multi-subscription model to isolate platform services from AI workloads.
+
 ```mermaid
 graph TD
-    subgraph Management_Hierarchy
-        MG[Enterprise Management Group]
-        MG --> PLAT[Platform MG]
-        MG --> WORK[Workload MG]
-        PLAT --> HUB_SUB[Hub Subscription]
-        WORK --> AI_SUB[AI Workload Subscriptions]
+    subgraph Enterprise_Root
+        MG_R[Root Management Group]
+        MG_R --> MG_P[Platform MG]
+        MG_R --> MG_L[Landing Zones MG]
+        
+        MG_P --> S_HUB[Hub / Connectivity Subscription]
+        MG_P --> S_MGMT[Management / Logging Subscription]
+        MG_P --> S_SEC[Identity / Security Subscription]
+        
+        MG_L --> S_AI[AI Workload Subscriptions]
+        MG_L --> S_DATA[Data Platform Subscriptions]
+        MG_L --> S_SB[Sandbox Subscriptions]
     end
-    
-    HUB_SUB --> HUB_VNET[Hub VNet: Firewall/DNS]
-    AI_SUB --> SPOKE_VNET[Spoke VNet: AI Services]
-    HUB_VNET <-->|Peering| SPOKE_VNET
 ```
 
-### 2. Hub-Spoke Network Topology
+### 2. Hub-and-Spoke Networking Topology
+A centralized Hub VNet manages egress via Azure Firewall, while Spoke VNets house isolated AI compute and data.
+
 ```mermaid
 graph LR
     subgraph Hub_VNet
         FW[Azure Firewall]
-        DNS[Private DNS Resolver]
-        GW[Application Gateway WAFv2]
+        DNS[Private DNS Zones]
+        GW[Application Gateway WAF]
     end
     
-    subgraph AI_Workload_Spoke
-        AKS[AKS with GPU Nodes]
-        OAI[Azure OpenAI Service]
-        COSMOS[(Cosmos DB)]
-        PE[Private Endpoints]
+    subgraph AI_Spoke_VNet
+        Sub1[Subnet: Compute AKS/GPU]
+        Sub2[Subnet: Data PE/Cosmos]
+        Sub3[Subnet: AI OpenAI]
     end
     
-    SUBG[On-Premises] ---|ExpressRoute| FW
-    FW --- PE
-    GW --- AKS
+    FW <-->|Peering| Sub1
+    GW <-->|Peering| Sub1
 ```
 
-### 3. AI Workload Request Flow
+### 3. Self-Service Provisioning Workflow
+Teams request resources via our **Governance Portal**, which triggers automated IaC deployments with built-in guardrails.
+
 ```mermaid
 sequenceDiagram
-    participant User as Engineering Team
-    participant Portal as AI Self-Service Portal
+    participant LT as Lead Scientist
+    participant Portal as Self-Service Portal
     participant API as Provisioning Engine
-    participant Cloud as Azure Resources
-    
-    User->>Portal: Request "GenAI RAG Workspace"
-    Portal->>Portal: Validate Quota & Policy
-    Portal->>API: Trigger Terraform Workflow
-    API->>Cloud: Deploy Isolated Spoke VNet
-    API->>Cloud: Provision Azure OpenAI + Key Vault
-    API->>Cloud: Link Private DNS Zones
-    Cloud-->>User: Delivery: "Secure Workspace Ready"
+    participant TF as Terraform Cloud
+    participant Azure as Azure Environment
+
+    LT->>Portal: Request "GenAI Workspace - Prod"
+    Portal->>API: Validates Policy & Budget
+    API->>TF: Initialize Workspace
+    TF->>Azure: Provision Hub-Spoke VNet
+    TF->>Azure: Provision Azure OpenAI + Private Link
+    Azure-->>LT: Delivery: "Secure Environment URL"
 ```
 
 ---
 
-## 🛡️ Governance & Security Pillars
+## 🏗️ Technical Specification
 
-### Policy-as-Code Automation
-- **`DENY-PUBLIC-AI-ENDPOINTS`**: Prevents creation of AI services with public access.
-- **`REQUIRE-VNET-INJECTION`**: Enforces all AI compute to reside within a specific subnet.
-- **`ENFORCE-MD-TAGGING`**: Mandatory tagging for cost allocation by Business Unit.
+| Domain | Solution Component | Tech Stack |
+|:---|:---|:---|
+| **Networking** | Hub-Spoke / Private Link | Terraform / Azure Firewall |
+| **Compute** | AKS (GPU) & Container Apps | K8s / Azure Bicep |
+| **AI Core** | Azure OpenAI / AI Studio | Cognitive Services |
+| **Security** | Key Vault / Bastion / WAF | Managed Identity |
+| **Governance** | Azure Policy / Purview | Policy-as-Code |
+| **FinOps** | Budgeting & Tagging | Azure Cost Management |
 
-### Security Baseline Diagram
-```mermaid
-graph TD
-    A[Internet] -->|WAF| B[App Gateway]
-    B -->|Private Link| C[Internal AI API]
-    C -->|Managed Identity| D[Key Vault]
-    C -->|Private Link| E[(Vector Database)]
-    F[Azure Defender] --- C
+---
+
+## �️ Security & Compliance Baseline
+
+The platform implements a **Zero-Trust** security model including:
+- **NSG/ASG Hardening**: Strictly controlling East-West and North-South traffic.
+- **Vulnerability Scanning**: Automated image scanning via Microsoft Defender.
+- **Secret Management**: Zero-knowledge secret handling via Key Vault.
+- **DDoS Protection**: Integrated Application Gateway with WAF protection for AI APIs.
+
+---
+
+## � Deployment Guide
+
+### Local Provisioning
+```powershell
+./scripts/provision-ailz.ps1 -Environment prod
 ```
 
----
-
-## 📦 Global Infrastructure Stack
-
-| Layer | Component | Technology | Priority |
-|:---|:---|:---|:---:|
-| **Networking** | Hub-and-Spoke | Terraform / ExpressRoute | Critical |
-| **Compute** | AKS (GPU) & Container Apps | K8s / Serverless | Performance |
-| **AI Services** | Azure OpenAI / AI Studio | Cognitive Services | Core |
-| **Identity** | Managed Identity / Entra ID | RBAC / PIM | Security |
-| **Data** | ADLS Gen2 / Cosmos DB | Private Endpoint Storage | Foundation |
+### CI/CD Trigger
+The platform uses **GitHub Actions** for idempotent deployments.
+1.  **Plan**: Automated IaC linting and cost estimation.
+2.  **Approve**: Mandatory PR approval from Cloud Governance team.
+3.  **Apply**: Deterministic deployment to the target subscription.
 
 ---
 
-## 🚀 Self-Service Catalog
+## 🆘 Support & Consulting
+Devopstrio provides managed transition services for organizations migrating to industrial-grade AI foundations.
 
-The AI-LZ includes a **Service Catalog** allowing teams to provision standardized "T-Shirt Sized" environments:
-
-- **Small (GenAI Sandbox)**: Single OpenAI instance + Private Endpoint + Metadata DB.
-- **Medium (RAG Platform)**: AKS Cluster + Vector Search (AI Search) + Private Storage.
-- **Large (MLOps Pipeline)**: Full Hub-Spoke isolation + GPU Nodes + Databricks integration.
+- **Web**: [devopstrio.co.uk](https://devopstrio.co.uk)
+- **Consulting**: [ailz-support@devopstrio.co.uk](mailto:ailz-support@devopstrio.co.uk)
 
 ---
-
-## 🗺️ Multi-Year Roadmap
-
-- **Phase 1 (Now)**: Secure Hub-Spoke foundation & Azure OpenAI automation.
-- **Phase 2 (Q3 2026)**: Integration of Multi-Region DR for LLM Inference.
-- **Phase 3 (2027)**: "Autonomous Infrastructure"—AI-Ops-driven scaling and healing.
-
----
-
-## 🆘 Support & Scaling
-Devopstrio provides dedicated **Landing Zone Operations** to support global platform engineering teams.
-
-- **Status**: [lz-status.devopstrio.co.uk](https://devopstrio.co.uk)
-- **Email**: [lz-ops@devopstrio.co.uk](mailto:lz-ops@devopstrio.co.uk)
-
----
-<sub>&copy; 2026 Devopstrio &mdash; Mastering the Enterprise AI Foundation.</sub>
+<sub>&copy; 2026 Devopstrio &mdash; Scaling AI Engineering Excellence.</sub>
