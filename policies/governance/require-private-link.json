@@ -1,0 +1,29 @@
+{
+    "properties": {
+        "displayName": "Devopstrio: Enforce Private Link for AI Services",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "description": "Denies deployment of Azure AI (OpenAI) and Storage if public network access is enabled.",
+        "parameters": {},
+        "policyRule": {
+            "if": {
+                "allOf": [
+                    {
+                        "field": "type",
+                        "in": [
+                            "Microsoft.CognitiveServices/accounts",
+                            "Microsoft.Storage/storageAccounts"
+                        ]
+                    },
+                    {
+                        "field": "Microsoft.CognitiveServices/accounts/publicNetworkAccess",
+                        "notEquals": "Disabled"
+                    }
+                ]
+            },
+            "then": {
+                "effect": "Deny"
+            }
+        }
+    }
+}
