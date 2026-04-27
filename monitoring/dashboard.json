@@ -1,0 +1,63 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "description": "Devopstrio AI Landing Zone - Global Operations",
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "panels": [],
+            "title": "Platform Throughput (Requests / Minute)",
+            "type": "row"
+        },
+        {
+            "title": "Global AI Availability",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 8
+            },
+            "options": {
+                "colorMode": "background",
+                "graphMode": "area",
+                "justifyMode": "center",
+                "textMode": "value"
+            },
+            "targets": [
+                {
+                    "expr": "sum(up{service='ai-lz-api'}) / count(up{service='ai-lz-api'}) * 100"
+                }
+            ]
+        }
+    ],
+    "schemaVersion": 27,
+    "style": "dark",
+    "tags": [
+        "Devopstrio",
+        "AI-LZ",
+        "Enterprise"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "title": "AI Landing Zone Executive Monitor",
+    "uid": "ailz-dash-01"
+}
