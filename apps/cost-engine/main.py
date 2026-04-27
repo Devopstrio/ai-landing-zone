@@ -1,48 +1,55 @@
 import json
-from datetime import datetime, timedelta
+import requests
+from typing import Dict, Optional
 
-class CostIntelligenceEngine:
-    """Enterprise FinOps Engine for AI Landing Zone."""
+class EnterpriseFinOpsEngine:
+    """High-Performance Cost Governance Engine for AI Workloads."""
     
-    def __init__(self):
-        # Sample Unit Costs (Simulated for Enterprise)
-        self.gpu_hourly_cost = 3.06 # NC6s_v3
-        self.token_cost_per_1k = 0.03 # gpt-4o
-
-    def calculate_bu_chargeback(self, usage_data: list) -> dict:
-        """
-        Calculates departmental chargeback for ingested usage metrics.
-        """
-        report = {}
-        for entry in usage_data:
-            bu = entry['business_unit']
-            if bu not in report:
-                report[bu] = {"total_usd": 0.0, "gpu_hours": 0, "token_volume": 0}
-            
-            report[bu]["gpu_hours"] += entry.get('gpu_hours', 0)
-            report[bu]["token_volume"] += entry.get('tokens', 0)
-            
-            # Weighted calculation
-            cost = (entry.get('gpu_hours', 0) * self.gpu_hourly_cost) + \
-                   (entry.get('tokens', 0) / 1000 * self.token_cost_per_1k)
-            
-            report[bu]["total_usd"] += round(cost, 2)
-            
-        return {
-            "fiscal_period": "Q4-2026",
-            "currency": "USD",
-            "departmental_breakdown": report,
-            "forecast": self._generate_forecast(report)
+    def __init__(self, tenant_id: str):
+        self.tenant_id = tenant_id
+        # In production, these would be fetched via:
+        # https://prices.azure.com/api/retail/prices?currencyCode='USD'&$filter=serviceName eq 'Virtual Machines'
+        self.price_cache = {
+            "Standard_NC6s_v3": 3.06,
+            "Standard_ND96asr_v4": 32.77,
+            "gpt-4o-tokens-per-1k": 0.03
         }
 
-    def _generate_forecast(self, report: dict) -> str:
-        total = sum(d['total_usd'] for d in report.values())
-        return f"Projected 30-day spend: ${round(total * 1.15, 2)} based on current velocity."
+    def get_real_time_estimate(self, sku: str, region: str = "uksouth") -> float:
+        """
+        Fetches the latest consumption price for a specific AI-compute SKU.
+        """
+        # Simulated API resolution
+        return self.price_cache.get(sku, 0.0)
 
+    def analyze_efficiency(self, usage_metrics: Dict) -> Dict:
+        """
+        Detects idle resources and provides right-sizing recommendations.
+        """
+        recommendations = []
+        gpu_util = usage_metrics.get("avg_gpu_utilization", 0)
+        
+        if gpu_util < 10:
+            recommendations.append({
+                "action": "DE-PROVISION",
+                "resource": usage_metrics.get("resource_id"),
+                "saving_estimate": f"${round(self.get_real_time_estimate(usage_metrics.get('sku')) * 24 * 30, 2)}"
+            })
+            
+        return {
+            "tenant": self.tenant_id,
+            "utilization_score": gpu_util,
+            "efficiency_status": "POOR" if gpu_util < 30 else "OPTIMAL",
+            "recommendations": recommendations,
+            "next_audit": "2026-05-15"
+        }
+
+# Logic Verification
 if __name__ == "__main__":
-    engine = CostIntelligenceEngine()
-    sample_usage = [
-        {"business_unit": "Retail-AI", "gpu_hours": 120, "tokens": 500000},
-        {"business_unit": "Finance-GenAI", "gpu_hours": 45, "tokens": 2000000}
-    ]
-    print(json.dumps(engine.calculate_bu_chargeback(sample_usage), indent=4))
+    finops = EnterpriseFinOpsEngine("DEVOPSTRIO-CORP-91")
+    idle_cluster = {
+        "resource_id": "aks-ai-sandbox-01",
+        "sku": "Standard_NC6s_v3",
+        "avg_gpu_utilization": 4.5
+    }
+    print(json.dumps(finops.analyze_efficiency(idle_cluster), indent=4))
